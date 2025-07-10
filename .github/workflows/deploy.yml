@@ -1,0 +1,63 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: app-linux
+            asset_name: app-linux
+          - os: windows-latest
+            artifact_name: app-win.exe
+            asset_name: app-win.exe
+          - os: macos-latest
+            artifact_name: app-macos
+            asset_name: app-macos
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build executable with pkg
+        run: |
+          npx pkg . --targets node20-${{ matrix.os == 'windows-latest' && 'win' || (matrix.os == 'macos-latest' && 'macos' || 'linux') }} --output ${{ matrix.artifact_name }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_name }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ./artifacts/app-linux/app-linux
+            ./artifacts/app-win.exe/app-win.exe
+            ./artifacts/app-macos/app-macos
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
