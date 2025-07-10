@@ -33,6 +33,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Build Javascript
+        run: npm run build
       - name: Build executable with pkg
         run: |
           npx pkg . --targets node20-${{ matrix.os == 'windows-latest' && 'win' || (matrix.os == 'macos-latest' && 'macos' || 'linux') }} --output ${{ matrix.artifact_name }}
