@@ -1,42 +1,39 @@
-import puppeteer from 'puppeteer'
+import * as cheerio from 'cheerio';
+import https from 'https'
 
 class LoadImg {
 
-    async loadImg(url: string) {
-
-        try {
+    async loadImg(url: string): Promise<any> {
+        return new Promise((resolve, reject) => {
 
             url += '?l=english'
 
-            console.log("Process how many images need to be downloaded")
+            https.get(url, (res) => {
 
-            const browser = await puppeteer.launch(); // para ver o que está acontecendo
-            const page = await browser.newPage();
+                let html = ''
 
-            // await page.goto('https://steamcommunity.com/stats/367520/achievements', {
-            await page.goto(url, {
-                waitUntil: 'networkidle2',
-                timeout: 60000
-            });
+                res.on('data', chuck => html += chuck)
+                res.on('end', () => {
 
-            await page.waitForSelector('.achieveRow', { timeout: 10000 });
+                    const $ = cheerio.load(html);
 
-            const achievements = await page.$$eval('.achieveRow', rows =>
-                rows.map(row => ({
-                    title: row.querySelector('.achieveTxt h3')?.innerHTML.trim(),
-                    icon: row.querySelector('.achieveImgHolder img')?.getAttribute('src')
-                }))
-            );
+                    const achievements = $('.achieveRow').map((i, el) => {
 
-            await browser.close();
+                        const title = $(el).find('.achieveTxt h3').text();
+                        const icon = $(el).find('.achieveImgHolder img').attr('src');
 
-            return achievements;
+                        return {
+                            title,
+                            icon
+                        }
 
-        } catch (error) {
-            console.error("URL invalid")
-            throw error
-        }
+                    })
+                    resolve(achievements)
+                })
+                res.on('error', error => reject(error))
+            })
 
+        })
     }
 
 }

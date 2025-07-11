@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import https from 'https'
-import sharp from 'sharp'
 import { mkdir} from "node:fs";
+import fs from 'fs'
 
 class WriteImage {
 
@@ -10,26 +10,21 @@ class WriteImage {
         try {
 
             console.log("begin download images from Steam")
-            // let caminho = resolve(__dirname, '..', 'img');
+            let caminho = resolve('img');
 
-            this.verifyDirImg(resolve(__dirname, '..', 'img'))
+            this.verifyDirImg(caminho)
 
             for (const item of data) {
 
-                let caminho = resolve(__dirname, '..', 'img', `${item.title}.jpg`);
+                let caminho = resolve('img', `${item.title}.jpg`);
+                const file = fs.createWriteStream(caminho)
+
 
                 https.get(item.icon as string, (res) => {
-                    res.pipe(sharp().resize(500, 500).toFile(caminho, (err, info) => {
-
-                        if (err) {
-                            console.info("Error on download image : ", caminho)
-                            console.error(err)
-                        }
-
-                    }))
+                    res.pipe(file)
                 })
             }
-            
+
             console.info("Download finished")
 
         } catch (error) {
