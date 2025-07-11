@@ -38,10 +38,5 @@ This is a command-line application that automatically extracts **achievement ima
 If you're running the raw Node.js project:
 ```bash
 npm index.js
-
-```bash
 yarn start
-
-
-```bash
 pnpm  index.js
